@@ -207,9 +207,10 @@ createCircleButton(menu, "blue", "クイズ", 600, 250).addEventListener("click"
         ansImg.y = 50;
         quiz.addChild(ansImg);
         let timer = setInterval(() => { quiz.update(); }, 50);
+        const descIndex = Math.floor(Math.random() * 2) == 0 ? descRule.indexOf("国名") : descRule.indexOf("首都"); //0は国クイズ 1は首都クイズ
         for (let i = 0; i < 4; i++) {
-            const button = createButton(quiz, desc[id[i]][descRule.indexOf("国名")], i % 2 * 275 + 250, Math.floor(i / 2) * 75 + 300);
-            if (desc[id[i]][descRule.indexOf("国名")] === desc[id[answer]][descRule.indexOf("国名")]) {
+            const button = createButton(quiz, desc[id[i]][descIndex], i % 2 * 275 + 250, Math.floor(i / 2) * 75 + 300);
+            if (desc[id[i]][descIndex] === desc[id[answer]][descIndex]) {
                 button.addEventListener("click", () => {
                     quiz.enableDOMEvents(false);
                     createDialog(quiz, "正解！");
