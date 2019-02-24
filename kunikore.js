@@ -75,109 +75,8 @@ menu.addChild(nameText);
 
 //ボタン生成
 createCircleButton(menu, "aqua", " 母国", 50, 50);
-createCircleButton(menu, "red", "図鑑", 200, 250).addEventListener("click", () => {
-    changeStage(zukan);
-    let offset = 0;
-    generateZukan();
-
-    function generateZukan() {
-        zukan.removeAllChildren();
-        createCircleButton(zukan, "red", " 図鑑", 50, 50).addEventListener("click", changeStage(menu));
-        createCircleButton(zukan, "orange", "次へ", 750, 50, 50).addEventListener("click", () => {
-            if (offset + 8 < desc.length) {
-                offset += 8;
-                generateZukan();
-            }
-        });;
-        createCircleButton(zukan, "yellowgreen", "前へ", 650, 50, 50).addEventListener("click", () => {
-            if (offset > 0) {
-                offset -= 8;
-                generateZukan();
-            }
-        });;
-
-        for (let i = 0; i + offset < desc.length && i < 8; i++) {
-            const container = new createjs.Container();
-            zukan.addChild(container);
-            if (storage.getItem(i + offset) === "own") {
-                const zukanImg = new createjs.Bitmap("imgs/" + (i + offset) + ".png"); //持っている場合のみ画像を表示
-                zukanImg.scale = 0.5;
-                zukanImg.y = 15;
-                container.addChild(zukanImg);
-            }
-            const zukanText = new createjs.Text("No." + (i + offset), "16px Arial", "black");
-            container.addChild(zukanText);
-            container.x = i % 4 * 170 + 100;
-            container.y = Math.floor(i / 4) * 130 + 150;
-            container.addEventListener("click", () => {
-                zukan.enableDOMEvents(false);
-                kakudai.enableDOMEvents(true);
-                kakudai.addChild(new createjs.Bitmap("imgs/" + (i + offset) + ".png"));
-                const title = new createjs.Text(desc[i + offset][descRule.indexOf("国名")], "32px Arial", "black");
-                title.x = 350;
-                title.y = 50;
-                kakudai.addChild(title);
-                const text = new createjs.Text(desc[i + offset][descRule.indexOf("説明")], "16px Arial", "black");
-                text.x = 350;
-                text.y = 100;
-                text.lineWidth = 1;
-                text.maxWidth = canvas.width - text.x;
-                kakudai.addChild(text);
-                createCircleButton(kakudai, "green", "戻る", 100, 320).addEventListener("click", () => {
-                    kakudai.enableDOMEvents(false);
-                    setTimeout(() => { zukan.update() }, 100);
-                    zukan.enableDOMEvents(true);
-                });;
-                kakudai.update();
-            });
-        }
-        setTimeout(() => { zukan.update() }, 100);
-    }
-});
-createCircleButton(menu, "green", "ガチャ", 400, 250).addEventListener("click", () => {
-    let isLocked = false; //まだ見つけていない国があるか
-    for (let i = 0; i < desc.length; i++) {
-        if (storage.getItem(i) !== "own") isLocked = true;
-    }
-    if (!isLocked) {
-        createDialog(menu, "全ての国を見つけました");
-    } else if (point < GACHA_COST) {
-        createDialog(menu, "ﾎﾟｲﾝﾖが足りません");
-    } else {
-        point -= GACHA_COST; //GACHA_COSTポインヨ減らす
-        storage.setItem("point", point);
-        changeStage(gacha);
-        gacha.removeAllChildren(); //ガチャ画面をクリア
-
-        let n = 0;
-        do {
-            n = Math.floor(Math.random() * desc.length);
-        } while (storage.getItem(n) === "own");
-        storage.setItem(n, "own");
-        const img = new createjs.Bitmap("imgs/" + n + ".png");
-        img.scale = 0;
-        img.regX = 160;
-        img.regY = 106;
-        img.x = canvas.width / 2;
-        img.y = canvas.height / 2;
-        gacha.addChild(img);
-        const timer = setInterval(() => {
-            if (img.scale > 1.4) {
-                clearInterval(timer);
-                createDialog(gacha, desc[n][descRule.indexOf("国名")] + "を入手");
-                createCircleButton(gacha, "green", "ガチャ", 50, 50).addEventListener("click", () => { //戻るボタンを追加
-                    menu.removeChild(pointCircle);
-                    pointCircle = createCircleButton(menu, "orange", "ﾎﾟｲﾝﾖ：" + point, 500, 50, 50);
-                    changeStage(menu);
-                });;
-                gacha.update();
-            } else {
-                img.scale += 0.1;
-                gacha.update();
-            };
-        }, 100);
-    }
-});;
+createCircleButton(menu, "red", "図鑑", 200, 250).addEventListener("click", generateZukanGamen());
+createCircleButton(menu, "green", "ガチャ", 400, 250).addEventListener("click", generateGachaGamen());;
 createCircleButton(menu, "blue", "クイズ", 600, 250).addEventListener("click", () => {
     menu.enableDOMEvents(false);
     let combo = 0;
@@ -279,6 +178,114 @@ createCircleButton(menu, "purple", "ランキング", 600, 50, 50).addEventListe
 //描写 
 setTimeout(() => { menu.update(); }, 100);
 
+//図鑑画面生成
+function generateZukanGamen() {
+    changeStage(zukan);
+    let offset = 0;
+    generateZukan();
+
+    function generateZukan() {
+        zukan.removeAllChildren();
+        createCircleButton(zukan, "red", " 図鑑", 50, 50).addEventListener("click", changeStage(menu));
+        createCircleButton(zukan, "orange", "次へ", 750, 50, 50).addEventListener("click", () => {
+            if (offset + 8 < desc.length) {
+                offset += 8;
+                generateZukan();
+            }
+        });;
+        createCircleButton(zukan, "yellowgreen", "前へ", 650, 50, 50).addEventListener("click", () => {
+            if (offset > 0) {
+                offset -= 8;
+                generateZukan();
+            }
+        });;
+
+        for (let i = 0; i + offset < desc.length && i < 8; i++) {
+            const container = new createjs.Container();
+            zukan.addChild(container);
+            if (storage.getItem(i + offset) === "own") {
+                const zukanImg = new createjs.Bitmap("imgs/" + (i + offset) + ".png"); //持っている場合のみ画像を表示
+                zukanImg.scale = 0.5;
+                zukanImg.y = 15;
+                container.addChild(zukanImg);
+            }
+            const zukanText = new createjs.Text("No." + (i + offset), "16px Arial", "black");
+            container.addChild(zukanText);
+            container.x = i % 4 * 170 + 100;
+            container.y = Math.floor(i / 4) * 130 + 150;
+            container.addEventListener("click", () => {
+                zukan.enableDOMEvents(false);
+                kakudai.enableDOMEvents(true);
+                kakudai.addChild(new createjs.Bitmap("imgs/" + (i + offset) + ".png"));
+                const title = new createjs.Text(desc[i + offset][descRule.indexOf("国名")], "32px Arial", "black");
+                title.x = 350;
+                title.y = 50;
+                kakudai.addChild(title);
+                const text = new createjs.Text(desc[i + offset][descRule.indexOf("説明")], "16px Arial", "black");
+                text.x = 350;
+                text.y = 100;
+                text.lineWidth = 1;
+                text.maxWidth = canvas.width - text.x;
+                kakudai.addChild(text);
+                createCircleButton(kakudai, "green", "戻る", 100, 320).addEventListener("click", () => {
+                    kakudai.enableDOMEvents(false);
+                    setTimeout(() => { zukan.update() }, 100);
+                    zukan.enableDOMEvents(true);
+                });;
+                kakudai.update();
+            });
+        }
+        setTimeout(() => { zukan.update() }, 100);
+    }
+}
+
+//ガチャ画面生成
+function generateGachaGamen() {
+    let isLocked = false; //まだ見つけていない国があるか
+    for (let i = 0; i < desc.length; i++) {
+        if (storage.getItem(i) !== "own") isLocked = true;
+    }
+    if (!isLocked) {
+        createDialog(menu, "全ての国を見つけました");
+    } else if (point < GACHA_COST) {
+        createDialog(menu, "ﾎﾟｲﾝﾖが足りません");
+    } else {
+        point -= GACHA_COST; //GACHA_COSTポインヨ減らす
+        storage.setItem("point", point);
+        changeStage(gacha);
+        gacha.removeAllChildren(); //ガチャ画面をクリア
+
+        let n = 0;
+        do {
+            n = Math.floor(Math.random() * desc.length);
+        } while (storage.getItem(n) === "own");
+        storage.setItem(n, "own");
+        const img = new createjs.Bitmap("imgs/" + n + ".png");
+        img.scale = 0;
+        img.regX = 160;
+        img.regY = 106;
+        img.x = canvas.width / 2;
+        img.y = canvas.height / 2;
+        gacha.addChild(img);
+        const timer = setInterval(() => {
+            if (img.scale > 1.4) {
+                clearInterval(timer);
+                createDialog(gacha, desc[n][descRule.indexOf("国名")] + "を入手");
+                createCircleButton(gacha, "green", "ガチャ", 50, 50).addEventListener("click", () => { //戻るボタンを追加
+                    menu.removeChild(pointCircle);
+                    pointCircle = createCircleButton(menu, "orange", "ﾎﾟｲﾝﾖ：" + point, 500, 50, 50);
+                    changeStage(menu);
+                });;
+                gacha.update();
+            } else {
+                img.scale += 0.1;
+                gacha.update();
+            };
+        }, 100);
+    }
+}
+
+//画面切り替え
 function changeStage(stage) {
     menu.enableDOMEvents(false);
     zukan.enableDOMEvents(false);
