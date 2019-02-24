@@ -62,7 +62,7 @@ if (name === null) {
 }
 const GACHA_COST = 3;
 
-//メインメニューのセットアップ
+//メインメニュー画面の生成
 //背景画像
 const menuImg = new createjs.Bitmap("sekaichizu.jpg");
 menuImg.scale = 1.6;
@@ -75,63 +75,10 @@ menu.addChild(nameText);
 
 //ボタン生成
 createCircleButton(menu, "aqua", " 母国", 50, 50);
-createCircleButton(menu, "red", "図鑑", 200, 250).addEventListener("click", generateZukanGamen());
-createCircleButton(menu, "green", "ガチャ", 400, 250).addEventListener("click", generateGachaGamen());;
-createCircleButton(menu, "blue", "クイズ", 600, 250).addEventListener("click", () => {
-    menu.enableDOMEvents(false);
-    let combo = 0;
-    generateQuiz();
-
-    function generateQuiz() {
-        quiz.enableDOMEvents(true);
-        quiz.removeAllChildren();
-        createCircleButton(quiz, "blue", "   クイズ", 50, 50).addEventListener("click", () => {
-            clearInterval(timer);
-            quiz.enableDOMEvents(false);
-            menu.enableDOMEvents(true);
-            menu.removeChild(pointCircle);
-            pointCircle = createCircleButton(menu, "orange", "ﾎﾟｲﾝﾖ：" + point, 500, 50, 50);
-            menu.update();
-        });;
-        createCircleButton(quiz, "green", "COMBO:" + combo, 700, 50, 50);
-        let id = new Array();
-        while (id.length < 4) {
-            const n = Math.floor(Math.random() * desc.length); //乱数を生成
-            if (!id.includes(n)) id.push(n);
-        }
-        let answer = Math.floor(Math.random() * 4); //正解を決める
-        const ansImg = new createjs.Bitmap("imgs/" + id[answer] + ".png");
-        ansImg.regX = 160;
-        ansImg.x = canvas.width / 2;
-        ansImg.y = 50;
-        quiz.addChild(ansImg);
-        let timer = setInterval(() => { quiz.update(); }, 100);
-        const descIndex = Math.floor(Math.random() * 2) == 0 ? descRule.indexOf("国名") : descRule.indexOf("首都"); //0は国クイズ 1は首都クイズ
-        for (let i = 0; i < 4; i++) {
-            const button = createButton(quiz, desc[id[i]][descIndex], i % 2 * 275 + 250, Math.floor(i / 2) * 75 + 300);
-            if (desc[id[i]][descIndex] === desc[id[answer]][descIndex]) {
-                button.addEventListener("click", () => {
-                    quiz.enableDOMEvents(false);
-                    createDialog(quiz, "正解！");
-                    point++;
-                    storage.setItem("point", point);
-                    combo++;
-                    clearInterval(timer);
-                    setTimeout(() => { generateQuiz(); }, 500);
-                });
-            } else {
-                button.addEventListener("click", () => {
-                    quiz.enableDOMEvents(false);
-                    createDialog(quiz, "ブッブー！");
-                    combo = 0;
-                    clearInterval(timer);
-                    setTimeout(() => { generateQuiz(); }, 500);
-                });
-            };
-        }
-    }
-});
-
+createCircleButton(menu, "red", "図鑑", 200, 250).addEventListener("click", generateZukanGamen);
+createCircleButton(menu, "green", "ガチャ", 400, 250).addEventListener("click", generateGachaGamen);
+createCircleButton(menu, "blue", "クイズ", 600, 250).addEventListener("click", generateQuizGamen);
+createCircleButton(menu, "purple", "ランキング", 600, 50, 50).addEventListener("click", generateRankingGamen)
 let pointCircle = createCircleButton(menu, "orange", "ﾎﾟｲﾝﾖ:" + point, 500, 50, 50);
 createCircleButton(menu, "black", "初期化", 50, 400, 25).addEventListener("click", () => {
     storage.clear();
@@ -139,48 +86,17 @@ createCircleButton(menu, "black", "初期化", 50, 400, 25).addEventListener("cl
     setTimeout(() => { location.reload() }, 1000);
 });
 
-createCircleButton(menu, "purple", "ランキング", 600, 50, 50).addEventListener("click", () => {
-    ranking.removeAllChildren();
-    createCircleButton(ranking, "purple", "ランキング", 50, 50, 100).addEventListener("click", () => { changeStage(menu) });
-
-    //ランキング情報を取得
-    const csvData = getCsv("ranking.csv?=" + Math.random());
-    for (let i = 0; i < csvData.length; i++) {
-        const text = new createjs.Text(i + 1 + "位　" + csvData[i][0] + "：" + csvData[i][1], "16px Arial", "black");
-        text.x = 200;
-        text.y = 140 + i * 20;
-        ranking.addChild(text);
-    }
-
-    //所持国数をカウント
-    let score = 0;
-    for (let i = 0; i < desc.length; i++) {
-        if (storage.getItem(i) === "own") score++;
-    }
-    const scoreText = new createjs.Text("あなたの所持国数：" + score, "24px Arial", "black");
-    scoreText.x = 200;
-    scoreText.y = 100;
-    ranking.addChild(scoreText);
-
-    createCircleButton(ranking, "red", "登録", 200, 25, 50).addEventListener("click", () => {
-        const registReq = new XMLHttpRequest();
-        registReq.open("POST", "main.php", false);
-        registReq.setRequestHeader("content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-        registReq.send("command=regist&name=" + encodeURIComponent(name) + "&score=" + score);
-        registReq.onreadystatechange = () => {
-            console.log(registReq.status);
-        };
-        alert("登録しました。");
-    });
-    changeStage(ranking);
-})
-
 //描写 
 setTimeout(() => { menu.update(); }, 100);
 
+
+
+
 //図鑑画面生成
 function generateZukanGamen() {
-    changeStage(zukan);
+    menu.enableDOMEvents(false);
+    zukan.enableDOMEvents(true);
+    zukan.update();
     let offset = 0;
     generateZukan();
 
@@ -283,6 +199,99 @@ function generateGachaGamen() {
             };
         }, 100);
     }
+}
+
+//クイズ画面生成
+function generateQuizGamen() {
+    menu.enableDOMEvents(false);
+    let combo = 0;
+    generateQuiz();
+
+    function generateQuiz() {
+        quiz.enableDOMEvents(true);
+        quiz.removeAllChildren();
+        createCircleButton(quiz, "blue", "   クイズ", 50, 50).addEventListener("click", () => {
+            clearInterval(timer);
+            quiz.enableDOMEvents(false);
+            menu.enableDOMEvents(true);
+            menu.removeChild(pointCircle);
+            pointCircle = createCircleButton(menu, "orange", "ﾎﾟｲﾝﾖ：" + point, 500, 50, 50);
+            menu.update();
+        });;
+        createCircleButton(quiz, "green", "COMBO:" + combo, 700, 50, 50);
+        let id = new Array();
+        while (id.length < 4) {
+            const n = Math.floor(Math.random() * desc.length); //乱数を生成
+            if (!id.includes(n)) id.push(n);
+        }
+        let answer = Math.floor(Math.random() * 4); //正解を決める
+        const ansImg = new createjs.Bitmap("imgs/" + id[answer] + ".png");
+        ansImg.regX = 160;
+        ansImg.x = canvas.width / 2;
+        ansImg.y = 50;
+        quiz.addChild(ansImg);
+        let timer = setInterval(() => { quiz.update(); }, 100);
+        const descIndex = Math.floor(Math.random() * 2) == 0 ? descRule.indexOf("国名") : descRule.indexOf("首都"); //0は国クイズ 1は首都クイズ
+        for (let i = 0; i < 4; i++) {
+            const button = createButton(quiz, desc[id[i]][descIndex], i % 2 * 275 + 250, Math.floor(i / 2) * 75 + 300);
+            if (desc[id[i]][descIndex] === desc[id[answer]][descIndex]) {
+                button.addEventListener("click", () => {
+                    quiz.enableDOMEvents(false);
+                    createDialog(quiz, "正解！");
+                    point++;
+                    storage.setItem("point", point);
+                    combo++;
+                    clearInterval(timer);
+                    setTimeout(() => { generateQuiz(); }, 500);
+                });
+            } else {
+                button.addEventListener("click", () => {
+                    quiz.enableDOMEvents(false);
+                    createDialog(quiz, "ブッブー！");
+                    combo = 0;
+                    clearInterval(timer);
+                    setTimeout(() => { generateQuiz(); }, 500);
+                });
+            };
+        }
+    }
+}
+
+//ランキング画面生成
+function generateRankingGamen() {
+    ranking.removeAllChildren();
+    createCircleButton(ranking, "purple", "ランキング", 50, 50, 100).addEventListener("click", () => { changeStage(menu) });
+
+    //ランキング情報を取得
+    const csvData = getCsv("ranking.csv?=" + Math.random());
+    for (let i = 0; i < csvData.length; i++) {
+        const text = new createjs.Text(i + 1 + "位　" + csvData[i][0] + "：" + csvData[i][1], "16px Arial", "black");
+        text.x = 200;
+        text.y = 140 + i * 20;
+        ranking.addChild(text);
+    }
+
+    //所持国数をカウント
+    let score = 0;
+    for (let i = 0; i < desc.length; i++) {
+        if (storage.getItem(i) === "own") score++;
+    }
+    const scoreText = new createjs.Text("あなたの所持国数：" + score, "24px Arial", "black");
+    scoreText.x = 200;
+    scoreText.y = 100;
+    ranking.addChild(scoreText);
+
+    createCircleButton(ranking, "red", "登録", 200, 25, 50).addEventListener("click", () => {
+        const registReq = new XMLHttpRequest();
+        registReq.open("POST", "main.php", false);
+        registReq.setRequestHeader("content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+        registReq.send("command=regist&name=" + encodeURIComponent(name) + "&score=" + score);
+        registReq.onreadystatechange = () => {
+            console.log(registReq.status);
+        };
+        alert("登録しました。");
+    });
+    changeStage(ranking);
 }
 
 //画面切り替え
